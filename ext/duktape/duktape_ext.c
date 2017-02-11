@@ -7,13 +7,16 @@ static VALUE cContext;
 static VALUE cComplexObject;
 static VALUE oComplexObject;
 
+static VALUE eInternalError;
+
+#ifdef DUK_ERR_INTERNAL_ERROR
 static VALUE eUnimplementedError;
 static VALUE eUnsupportedError;
-static VALUE eInternalError;
 static VALUE eAllocError;
 static VALUE eAssertionError;
 static VALUE eAPIError;
 static VALUE eUncaughtError;
+#endif
 
 static VALUE eError;
 static VALUE eEvalError;
@@ -27,7 +30,12 @@ static rb_encoding *utf16enc;
 static VALUE sDefaultFilename;
 static ID id_complex_object;
 
+#ifdef DUK_ERR_INTERNAL_ERROR
 static void error_handler(duk_context *, int, const char *);
+#else
+static void error_handler(void *, const char *);
+#endif
+
 static int ctx_push_hash_element(VALUE key, VALUE val, VALUE extra);
 
 static unsigned long
@@ -73,6 +81,8 @@ static VALUE ctx_alloc(VALUE klass)
   return Data_Wrap_Struct(klass, ctx_mark, ctx_dealloc, state);
 }
 
+#ifdef DUK_ERR_INTERNAL_ERROR
+
 static VALUE error_code_class(int code) {
   switch (code) {
     case DUK_ERR_UNIMPLEMENTED_ERROR:
@@ -109,6 +119,8 @@ static VALUE error_code_class(int code) {
       return eInternalError;
   }
 }
+
+#endif
 
 static VALUE error_name_class(const char* name)
 {
@@ -628,10 +640,22 @@ static VALUE ctx_is_valid(VALUE self)
   }
 }
 
+#ifdef DUK_ERR_INTERNAL_ERROR
+
 static void error_handler(duk_context *ctx, int code, const char *msg)
 {
   clean_raise(ctx, error_code_class(code), "%s", msg);
 }
+
+#else  /* DUK_ERR_INTERNAL_ERROR */
+
+static void error_handler(void *v, const char *msg)
+{
+  duk_context *ctx = (duk_context *)v;
+  clean_raise(ctx, eInternalError, "%s", msg);
+}
+
+#endif	/* DUK_ERR_INTERNAL_ERROR */
 
 VALUE complex_object_instance(VALUE self)
 {
@@ -693,12 +717,25 @@ void Init_duktape_ext()
   cComplexObject = rb_define_class_under(mDuktape, "ComplexObject", rb_cObject);
 
   eInternalError = rb_define_class_under(mDuktape, "InternalError", rb_eStandardError);
+
+#ifdef DUK_ERR_UNIMPLEMENTED_ERROR
   eUnimplementedError = rb_define_class_under(mDuktape, "UnimplementedError", eInternalError);
+#endif
+#ifdef DUK_ERR_UNSUPPORTED_ERROR
   eUnsupportedError = rb_define_class_under(mDuktape, "UnsupportedError", eInternalError);
+#endif
+#ifdef DUK_ERR_ALLOC_ERROR
   eAllocError = rb_define_class_under(mDuktape, "AllocError", eInternalError);
+#endif
+#ifdef DUK_ERR_ASSERTION_ERROR
   eAssertionError = rb_define_class_under(mDuktape, "AssertionError", eInternalError);
+#endif
+#ifdef DUK_ERR_API_ERROR
   eAPIError = rb_define_class_under(mDuktape, "APIError", eInternalError);
+#endif
+#ifdef DUK_ERR_UNCAUGHT_ERROR
   eUncaughtError = rb_define_class_under(mDuktape, "UncaughtError", eInternalError);
+#endif
 
   eError = rb_define_class_under(mDuktape, "Error", rb_eStandardError);
   eEvalError = rb_define_class_under(mDuktape, "EvalError", eError);
