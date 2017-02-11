@@ -718,22 +718,12 @@ void Init_duktape_ext()
 
   eInternalError = rb_define_class_under(mDuktape, "InternalError", rb_eStandardError);
 
-#ifdef DUK_ERR_UNIMPLEMENTED_ERROR
+#ifdef DUK_ERR_INTERNAL_ERROR
   eUnimplementedError = rb_define_class_under(mDuktape, "UnimplementedError", eInternalError);
-#endif
-#ifdef DUK_ERR_UNSUPPORTED_ERROR
   eUnsupportedError = rb_define_class_under(mDuktape, "UnsupportedError", eInternalError);
-#endif
-#ifdef DUK_ERR_ALLOC_ERROR
   eAllocError = rb_define_class_under(mDuktape, "AllocError", eInternalError);
-#endif
-#ifdef DUK_ERR_ASSERTION_ERROR
   eAssertionError = rb_define_class_under(mDuktape, "AssertionError", eInternalError);
-#endif
-#ifdef DUK_ERR_API_ERROR
   eAPIError = rb_define_class_under(mDuktape, "APIError", eInternalError);
-#endif
-#ifdef DUK_ERR_UNCAUGHT_ERROR
   eUncaughtError = rb_define_class_under(mDuktape, "UncaughtError", eInternalError);
 #endif
 
